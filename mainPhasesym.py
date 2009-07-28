@@ -298,7 +298,11 @@ def phasesym(input_array, nscale, norient, minWaveLength, mult, sigmaOnf,
 
     """python entry of phasesym"""
     
+    rows, cols = input_array.shape
+
     imfft = np.fft.fft2(input_array)
+
+    assert input_array.shape == imfft.shape
 
     # Filter initializations
     sintheta, costheta, radius = filterIntialization(rows, cols)
@@ -320,6 +324,8 @@ def phasesym(input_array, nscale, norient, minWaveLength, mult, sigmaOnf,
     
     # Construct Low pass filter
     lp = getLowPassFilter(rows, cols, 0.4, 10.)
+    
+    assert input_array.shape == lp.shape
 
     # Radial Component
     logGabor = getGabor(radius, 
@@ -349,13 +355,23 @@ def phasesym(input_array, nscale, norient, minWaveLength, mult, sigmaOnf,
     return phasesym, orientation
 
 #-------------------------------------------------------------------------------
-def phasesym_fromArray(input_array):
+def regressionTest():
+    a = 10
+    return a
+
+    
+
+#-------------------------------------------------------------------------------
+def phasesym_fromArray(input_array, nscale, norient, minWaveLength, mult,
+                       sigmaOnf, dThetaOnSigma, k, polarity, overwrite):
     """pass an array and get phasesym and orientation in the form of array back"""
     
     # Call to phasesym
-    phasesym, orientation = phasesym(input_array)
+    phaseSym, orientation = phasesym(input_array, nscale, norient, minWaveLength, 
+                                     mult, sigmaOnf, dThetaOnSigma, k, polarity,
+                                     overwrite)
     
-    return phasesym, orientation
+    return phaseSym, orientation
 
 #-------------------------------------------------------------------------------
 def phasesym_fromfilename(
@@ -373,7 +389,7 @@ def phasesym_fromfilename(
     polarity = DEFAULT_POLARITY,
     # --
     overwrite = DEFAULT_OVERWRITE
-    output_fileformat = "pkl",
+#    output_fileformat = "pkl",
     ):
     
 
@@ -382,19 +398,24 @@ def phasesym_fromfilename(
     img = ImageOps.grayscale(img)
     arr = np.asarray(img)
 
+    #check existance of matlab here. if successful
+    regressionTest()
+
     # Call to phasesym
-    phasesym, orientation = phasesym_fromarray(arr)
+    phaseSym, orientation = phasesym_fromArray(arr, nscale, norient, minWaveLength,
+                                               mult, sigmaOnf, dThetaOnSigma, 
+                                               k, polarity, overwrite)
 
     # pkl
     import cPickle
     
-    data = {'phasesym': phasesym,
+    data = {'phasesym': phaseSym,
             'orientation': orientation,
             }
     cPickle.dump(data, open(output_filename, "w+"), protocol=2)
 
     # mat
-    io.savemat(data, format="4")
+#    sp.io.savemat(data, format="4")
 
     
     
@@ -477,7 +498,7 @@ def main():
                               mult = opts.mult,
                               sigmaOnf = opts.sigmaOnf,
                               dThetaOnSigma = opts.dThetaOnSigma,
-                              k = opts.k,
+                              k = opts.nstdeviations,
                               polarity = opts.polarity,
                               overwrite = opts.overwrite
                               )
