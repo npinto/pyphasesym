@@ -285,16 +285,16 @@ def getphasesym(rows, cols, imfft, logGabor,
 
     # Normalize totalEnergy by the totalSumAmp to obtain phase symmetry
     # epsilon is used to avoid division by 000
-    phasesym = totalEnergy/(totalSumAmp + epsilon)
+    phaseSym = totalEnergy/(totalSumAmp + epsilon)
 
     # Convert orientation matrix values to degrees
     orientation = orientation * (180/norient)
 
-    return phasesym, orientation
+    return phaseSym, orientation
 
 #-------------------------------------------------------------------------------
 def phasesym(input_array, nscale, norient, minWaveLength, mult, sigmaOnf,
-             dThetaOnSigma, k, polarity, overwrite):
+             dThetaOnSigma, k, polarity):
 
     """python entry of phasesym"""
     
@@ -352,7 +352,7 @@ def phasesym(input_array, nscale, norient, minWaveLength, mult, sigmaOnf,
                            k = DEFAULT_NSTD,
                            polarity = DEFAULT_POLARITY)
 
-    return phasesym, orientation
+    return phaseSym, orientation
 
 #-------------------------------------------------------------------------------
 def regressionTest():
@@ -368,8 +368,8 @@ def phasesym_fromArray(input_array, nscale, norient, minWaveLength, mult,
     
     # Call to phasesym
     phaseSym, orientation = phasesym(input_array, nscale, norient, minWaveLength, 
-                                     mult, sigmaOnf, dThetaOnSigma, k, polarity,
-                                     overwrite)
+                                     mult, sigmaOnf, dThetaOnSigma, k, polarity)
+                                     
     
     return phaseSym, orientation
 
@@ -414,10 +414,6 @@ def phasesym_fromfilename(
             }
     cPickle.dump(data, open(output_filename, "w+"), protocol=2)
 
-    # mat
-#    sp.io.savemat(data, format="4")
-
-    
     
 #--------------------------------------------------------------
 def main():
