@@ -5,29 +5,21 @@
 #                                                                      #
 # This module is part of pyphasesym package                            #
 ########################################################################
-""" This is a regressio"""
+""" This is regression test module for python phasesym"""
 
-import sys
-import os
-
-import unittest
-import nose
-import optparse
-import Image
 import glob
 
 import scipy as sp
-import numpy as np
-from numpy.testing import *
 
-from scipy.io import *
-from mainPhasesym import *
+from numpy.testing import assert_array_almost_equal
+
+from main_phasesym import phasesym
 
 # Get all the mat files for regression test
-matfiles = glob.glob('matfiles/*.mat') 
+MAT_FILES = glob.glob('matfiles/*.mat') 
 
 #-------------------------------------------------------------------------------
-def compare_py_mat(matfile):
+def compare_py_mat(mat_file):
 
     """Regression test function
 
@@ -40,30 +32,30 @@ def compare_py_mat(matfile):
     # Here you could have **kwargs as dicts so that you don't have to type
     # all the variables. You can just reference the variables
 
-    matVars = sp.io.loadmat(matfile)
-    p_phaseSym, p_orientation = phasesym(matVars['image'], 
-                                         matVars['scale'], 
-                                         matVars['orient'],
-                                         matVars['minWaveLength'], 
-                                         matVars['mult'], 
-                                         matVars['sigmaOnf'], 
-                                         matVars['dThetaOnSigma'], 
-                                         matVars['k'], 
-                                         matVars['polarity'])
+    mat_vars = sp.io.loadmat(mat_file)
+    p_phasesym, p_orientation = phasesym(mat_vars['image'], 
+                                         mat_vars['scale'], 
+                                         mat_vars['orient'],
+                                         mat_vars['minWaveLength'], 
+                                         mat_vars['mult'], 
+                                         mat_vars['sigmaOnf'], 
+                                         mat_vars['dThetaOnSigma'], 
+                                         mat_vars['k'], 
+                                         mat_vars['polarity'])
 
     # have kwargs
-    assert_array_almost_equal(p_phaseSym, matVars['phaseSym'])
-    assert_array_almost_equal(p_orientation, matVars['orientation'])
+    assert_array_almost_equal(p_phasesym, mat_vars['phaseSym'])
+    assert_array_almost_equal(p_orientation, mat_vars['orientation'])
 
 #-------------------------------------------------------------------------------
 def test_generator():
 
     """ Generate tests as long mat files exists files 
 
-    mat files stored in matfiles/ directory of the package"""
+    mat files stored in MAT_FILES/ directory of the package"""
     
-    for matfile in matfiles:
-        yield compare_py_mat, matfile # Do we need **kwargs here 
+    for mat_file in MAT_FILES:
+        yield compare_py_mat, mat_file # Do we need **kwargs here 
     
 
         
