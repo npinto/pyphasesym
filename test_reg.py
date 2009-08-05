@@ -5,6 +5,7 @@
 #                                                                      #
 # This module is part of pyphasesym package                            #
 ########################################################################
+""" This is a regressio"""
 
 import sys
 import os
@@ -36,7 +37,6 @@ def compare_py_mat(matfile):
     Output for python obtained by invoking phasesym function from 
     mainPhasesym.py module"""
 
-
     # Here you could have **kwargs as dicts so that you don't have to type
     # all the variables. You can just reference the variables
 
@@ -52,9 +52,8 @@ def compare_py_mat(matfile):
                                          matVars['polarity'])
 
     # have kwargs
-    pouts = p_phaseSym
-    mouts = matVars['phaseSym']
-    assert_array_almost_equal(pouts, mouts)
+    assert_array_almost_equal(p_phaseSym, matVars['phaseSym'])
+    assert_array_almost_equal(p_orientation, matVars['orientation'])
 
 #-------------------------------------------------------------------------------
 def test_generator():
