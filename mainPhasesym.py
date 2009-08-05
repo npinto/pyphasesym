@@ -330,16 +330,16 @@ def phasesym(input_array, nscale, norient, minWaveLength, mult, sigmaOnf,
     # Radial Component
     logGabor = getGabor(radius, 
                         lp,
-                        nscale = DEFAULT_NSCALE,
-                        minWaveLength = DEFAULT_MWAVELENGTH,
-                        mult = DEFAULT_MULT,
-                        sigmaOnf = DEFAULT_SIGMAONF)
+                        nscale,
+                        minWaveLength,
+                        mult,
+                        sigmaOnf)
     
     # Construct the angular filter components
     spread = getSpread(sintheta,
                        costheta,
-                       norient = DEFAULT_ORIENT,
-                       dThetaSigma = DEFAULT_DTHETASEGMA)
+                       norient,
+                       dThetaOnSigma)
 
     # Get phase symmetry and orientation of image
     phaseSym, orientation = getphasesym(rows, 
@@ -347,28 +347,28 @@ def phasesym(input_array, nscale, norient, minWaveLength, mult, sigmaOnf,
                            imfft,
                            logGabor,
                            spread,
-                           nscale = DEFAULT_NSCALE,
-                           norient = DEFAULT_ORIENT,
-                           k = DEFAULT_NSTD,
-                           polarity = DEFAULT_POLARITY)
+                           nscale,
+                           norient,
+                           k,
+                           polarity)
 
     return phaseSym, orientation
 
 #-------------------------------------------------------------------------------
-def regressionTest():
-    a = 10
-    return a
-
-    
-
-#-------------------------------------------------------------------------------
 def phasesym_fromArray(input_array, nscale, norient, minWaveLength, mult,
-                       sigmaOnf, dThetaOnSigma, k, polarity, overwrite):
+                       sigmaOnf, dThetaOnSigma, k, polarity):
     """pass an array and get phasesym and orientation in the form of array back"""
     
     # Call to phasesym
-    phaseSym, orientation = phasesym(input_array, nscale, norient, minWaveLength, 
-                                     mult, sigmaOnf, dThetaOnSigma, k, polarity)
+    phaseSym, orientation = phasesym(input_array, 
+                                     nscale, 
+                                     norient, 
+                                     minWaveLength, 
+                                     mult, 
+                                     sigmaOnf, 
+                                     dThetaOnSigma, 
+                                     k, 
+                                     polarity)
                                      
     
     return phaseSym, orientation
@@ -377,39 +377,46 @@ def phasesym_fromArray(input_array, nscale, norient, minWaveLength, mult,
 def phasesym_fromfilename(
     input_filename,
     output_filename,
-    # --
-    nscale = DEFAULT_NSCALE,
-    # 
-    norient = DEFAULT_ORIENT,
-    minWaveLength = DEFAULT_MWAVELENGTH,
-    mult = DEFAULT_MULT,
-    sigmaOnf = DEFAULT_SIGMAONF,
-    dThetaOnSigma = DEFAULT_DTHETASEGMA,
-    k = DEFAULT_NSTD,
-    polarity = DEFAULT_POLARITY,
-    # --
-    overwrite = DEFAULT_OVERWRITE
-#    output_fileformat = "pkl",
+    nscale,
+    norient,
+    minWaveLength,
+    mult,
+    sigmaOnf,
+    dThetaOnSigma,
+    k,
+    polarity,
+    overwrite
+    # Here we can also have check for output fileformat
     ):
     
+    """Basic input output file handling function.
+    This function also invokes call to phasesym_fromArray function"""
 
     # Read input Image
     img = Image.open(input_filename)
     img = ImageOps.grayscale(img)
-    arr = np.asarray(img)
-
-    #check existance of matlab here. if successful
-    regressionTest()
+    imarr = np.asarray(img)
 
     # Call to phasesym
-    phaseSym, orientation = phasesym_fromArray(arr, nscale, norient, minWaveLength,
-                                               mult, sigmaOnf, dThetaOnSigma, 
-                                               k, polarity, overwrite)
+    phaseSym, orientation = phasesym_fromArray(imarr, 
+                                               nscale, 
+                                               norient, 
+                                               minWaveLength,
+                                               mult, 
+                                               sigmaOnf, 
+                                               dThetaOnSigma, 
+                                               k, 
+                                               polarity)
+    
+    assert imarr.shape == phaseSym.shape
+    assert imarr.shape == orientation.shape
 
+    print phaseSym
+    print orientation
     # pkl
     import cPickle
     
-    data = {'phasesym': phaseSym,
+    data = {'phaseSym': phaseSym,
             'orientation': orientation,
             }
     cPickle.dump(data, open(output_filename, "w+"), protocol=2)

@@ -41,7 +41,7 @@ def compare_py_mat(matfile):
     # have kwargs
     pouts = p_phaseSym
     mouts = matVars['phaseSym']
-    assert_array_almost_equal(mouts, mouts)
+    assert_array_almost_equal(pouts, mouts)
 
 def test_generator():
 
