@@ -1,11 +1,16 @@
-# Test module
+########################################################################
+# This module is regression test module for python version of phasesym #
+# This module compares between matlab outputs and python outputs for   #
+# same inputs as a part of regression tests                            #
+#                                                                      #
+# This module is part of pyphasesym package                            #
+########################################################################
 
 import sys
 import os
 
 import unittest
 import nose
-import random
 import optparse
 import Image
 import glob
@@ -17,12 +22,20 @@ from numpy.testing import *
 from scipy.io import *
 from mainPhasesym import *
 
-matfiles = glob.glob('*.mat') 
+# Get all the mat files for regression test
+matfiles = glob.glob('matfiles/*.mat') 
 
+#-------------------------------------------------------------------------------
 def compare_py_mat(matfile):
 
-    """Main module to compare the output generated from
-    matlab and output generated from python program for phasesym"""
+    """Regression test function
+
+    Compare output of matlab and python for same inputs
+    Inputs obtained from stored mat files 
+    Output for matlab obtained from stored mat files
+    Output for python obtained by invoking phasesym function from 
+    mainPhasesym.py module"""
+
 
     # Here you could have **kwargs as dicts so that you don't have to type
     # all the variables. You can just reference the variables
@@ -43,10 +56,12 @@ def compare_py_mat(matfile):
     mouts = matVars['phaseSym']
     assert_array_almost_equal(pouts, mouts)
 
+#-------------------------------------------------------------------------------
 def test_generator():
 
-    """ Generate tests as long as  *.mat files (stored in matfiles variable) 
-    exist in directory"""
+    """ Generate tests as long mat files exists files 
+
+    mat files stored in matfiles/ directory of the package"""
     
     for matfile in matfiles:
         yield compare_py_mat, matfile # Do we need **kwargs here 

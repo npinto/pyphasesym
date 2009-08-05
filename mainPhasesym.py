@@ -1,10 +1,11 @@
-#######################################################################################
-# This function calculates the phase symmetry of points in an image.	              #
-# This is a contrast invariant measure of symmetry.  This function can be             #
-# used as a line and blob detector.  The greyscale 'polarity' of the lines            #
-# that you want to find can be specified. The convolutions are done with FFT          #
-# usage <input_filename> <output_filename>                                            #
-#######################################################################################
+#################################################################################
+# This module calculates the phase symmetry of points in an image.	        #
+# This is a contrast invariant measure of symmetry.  This function can be       #
+# used as a line and blob detector.  The greyscale 'polarity' of the lines      #
+# that you want to find can be specified. The convolutions are done with FFT    #
+# usage <input_filename> <output_filename>                                      #
+# This module is part of pyphasesym package                                     #
+#################################################################################
 
 import os
 import sys
@@ -31,35 +32,39 @@ DEFAULT_NSTD = 2.
 DEFAULT_POLARITY = 0
 DEFAULT_OVERWRITE = False
 
-#--------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def filterIntialization(rows, cols):
-    """Filter initialization components """
+
+    """Filter initialization components 
+
+    Input: no of rows and cols in the image
+    Output: np arrays with filter components sintheta, costheta and radius"""
     
     # Set up X and Y matrices with ranges normalised to +/- 0.5
     # The following code adjusts things appropriately for odd and even values
     # of rows and columns.
 
     if np.mod(cols,2):
-        xr = np.arange(-(cols - 1)/2,(cols - 1)/2 + 1, \
-                            dtype = "float32" )/(cols - 1)
+        xr = np.arange(-(cols - 1)/2, (cols - 1)/2 + 1, 
+                            dtype = "float32" )/ (cols - 1)
     else:
         xr= np.arange(-cols/2, (cols/2 - 1) + 1, \
-                           dtype = "float32")/cols
+                           dtype = "float32")/ cols
         
     if np.mod(rows,2):
-        yr = np.arange( -(rows - 1)/2, (rows - 1)/2 + 1, \
-                             dtype="float32")/(rows-1)
+        yr = np.arange(-(rows - 1)/2, (rows - 1)/2 + 1, \
+                             dtype="float32")/ (rows-1)
     else:
-        yr = np.arange( -rows/2, (rows/2 - 1) +1, \
-                             dtype = "float32")/rows
+        yr = np.arange(-rows/2, (rows/2 - 1) +1, \
+                             dtype = "float32")/ rows
 
     x,y = np.meshgrid(xr,yr)
     
     # Matrix values contain *normalised* radius from centre.
-    radius = np.sqrt(x**2 + y**2)        
+    radius = np.sqrt(x ** 2 + y ** 2)        
 
     # Matrix values contain polar angle.
-    theta = np.arctan2(-y,x)
+    theta = np.arctan2(-y, x)
 
     # Quadrant shift radius and theta so that filters	       
     # are constructed with 0 frequency at the corners.       
@@ -75,10 +80,16 @@ def filterIntialization(rows, cols):
     sintheta = np.sin(theta)
     costheta = np.cos(theta)
 
+    assert sintheta.shape == costheta.shape
     return sintheta, costheta, radius
 
-#--------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def getLowPassFilter(rows, cols, cutoff, n):
+
+    """Compute low pass filter with given cutoff
+    
+    Input: imagesize, cuttoff frequency, order of filter
+    Output: lowpass filter with given parameters. Implemented as np array"""
 
     if cutoff < 0 or cutoff > 0.5:
         print "ERROR:cutoff frequency must be between 0 and 0.5"
@@ -89,23 +100,26 @@ def getLowPassFilter(rows, cols, cutoff, n):
         #TODO: check function controls here
 
     if np.mod(cols,2):
-        xr = np.arange(-(cols-1)/2, (cols - 1)/2 + 1, dtype="float32")/(cols - 1)
+        xr = np.arange(-(cols - 1)/2, (cols - 1)/2 + 1, dtype="float32")/ \
+            (cols - 1)
     else:
         xr = np.arange(-cols/2, (cols/2 - 1) + 1, dtype="float32")/cols
 
     if np.mod(rows,2):
-        yr = np.arange(-(rows-1)/2, (rows - 1)/2 + 1, dtype="float32")/(rows-1)
+        yr = np.arange(-(rows - 1)/2, (rows - 1)/2 + 1, dtype="float32")/ \
+            (rows-1)
     else:
         yr = np.arange(-rows/2, (rows/2 - 1) + 1, dtype="float32")/rows
 
     x,y = np.meshgrid(xr,yr)
-    radius = np.sqrt(x**2 + y**2)
+    radius = np.sqrt(x ** 2 + y ** 2)
     f = np.fft.ifftshift( 1./ (1. + (radius/ cutoff) ** (2*n) ))
 
     return f
 
-#--------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def getGabor(radius, lp, nscale, minWaveLength, mult, sigmaOnf):
+
     """ Get gabors with logarithmic transfer fucntions """
     
     logGabor = []
@@ -115,8 +129,8 @@ def getGabor(radius, lp, nscale, minWaveLength, mult, sigmaOnf):
         fo = 1./wavelength                   # Filter Frequence
 
         # Apply low pass filter
-        logGabor += [(np.exp((-(np.log(radius/fo))**2)/\
-                                 (2 * np.log(sigmaOnf) **2)))*lp]
+        logGabor += [(np.exp((-(np.log(radius/fo)) ** 2)/\
+                                 (2 * np.log(sigmaOnf) ** 2))) * lp]
 
         # Set the value at the 0 frequency point of the filter
         # back to zero (undo the radius fudge)
@@ -124,7 +138,7 @@ def getGabor(radius, lp, nscale, minWaveLength, mult, sigmaOnf):
 
     return logGabor
 
-#--------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def getSpread(sintheta, costheta, norient, dThetaSigma):
 
     """ Compute angular components of the filter"""
@@ -149,16 +163,21 @@ def getSpread(sintheta, costheta, norient, dThetaSigma):
         # Difference in cosine
         dc = costheta * np.cos(angl) + sintheta * np.sin(angl)  
         # Abs angular distance
-        dtheta = abs(np.arctan2(ds,dc))                         
+        dtheta = abs(np.arctan2(ds, dc))                         
         # Angular filter component
-        spread += [np.exp((-dtheta**2)/(2 * thetaSigma**2))]      
+        spread += [np.exp((-dtheta ** 2)/(2 * thetaSigma ** 2))]      
 
     return spread
 
-#--------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def getOrientationEnergy(orientationEnergy, EO, o, polarity, nscale):
 
-    """Calculate the phase symmetry measure based on polartiy"""
+    """Calculate the phase symmetry measure based on polartiy
+
+    if polarity == 0, you get black and white spots
+    if polarity == 1, you get white spots only
+    if polarity ==-1 you get black spots only"""
+
     #look for 'white' and 'black' spots
     if polarity == 0: 
         for s in range(int(nscale)):
@@ -179,11 +198,14 @@ def getOrientationEnergy(orientationEnergy, EO, o, polarity, nscale):
 
     return orientationEnergy
 
-#--------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def getphasesym(rows, cols, imfft, logGabor, 
                 spread, nscale, norient, k, polarity):
 
-    """ The main loop of phasesym"""
+    """ The main loop of phasesym 
+
+    Input: rows, cols, imfft, logGabor,spread, nscale, norient, k, polarity
+    Output: phaseSym, orientation as numpy arrays"""
 
     # Array initialization
     EO = np.ndarray((nscale, norient, rows, cols),dtype="complex_")
@@ -207,7 +229,7 @@ def getphasesym(rows, cols, imfft, logGabor,
             #Multiply radial and angular components to get filter
             filter = logGabor[s] * spread[o]  
             ifftFilterArray[s] = np.real(np.fft.ifft2(filter)) * \
-                np.sqrt(rows*cols)
+                np.sqrt(rows * cols)
             
             #Convolve image with even and odd filters returning the result in EO
             EO[s][o] = np.fft.ifft2(imfft * filter)
@@ -217,7 +239,7 @@ def getphasesym(rows, cols, imfft, logGabor,
             # Record mean squared filter value at smallest
             # scale. This si used for noise estimation
             if s == 0:
-                EM_n = sum(sum(filter**2))
+                EM_n = sum(sum(filter ** 2))
         
         # Now Calulate phase symmetry measure
         orientationEnergy = getOrientationEnergy(orientationEnergy, 
@@ -231,7 +253,7 @@ def getphasesym(rows, cols, imfft, logGabor,
         # mean.  The estimate of noise power is obtained by dividing the mean
         # squared energy value by the mean squared filter value
 
-        medianE2n = np.median((abs(EO[0][o])** 2).ravel())
+        medianE2n = np.median((abs(EO[0][o]) ** 2).ravel())
         meanE2n = -medianE2n/np.log(0.5)
 
         noisePower = meanE2n/EM_n           # Estimate noise power
@@ -241,7 +263,7 @@ def getphasesym(rows, cols, imfft, logGabor,
 
         EstSumAn2 = np.zeros((rows,cols), dtype="float32")
         for s in range(int(nscale)):
-            EstSumAn2 = EstSumAn2 + ifftFilterArray[s]**2
+            EstSumAn2 = EstSumAn2 + ifftFilterArray[s] ** 2
 
         EstSumAiAj = np.zeros((rows,cols), dtype="float32")
         for si in range(int(nscale - 1)):
@@ -249,13 +271,13 @@ def getphasesym(rows, cols, imfft, logGabor,
                 EstSumAiAj = EstSumAiAj + \
                     ifftFilterArray[si] * ifftFilterArray[sj]
         
-        EstNoiseEnergy2 = 2*noisePower*sum(sum(EstSumAn2)) \
-            + 4*noisePower*sum(sum(EstSumAiAj))
+        EstNoiseEnergy2 = 2 * noisePower * sum(sum(EstSumAn2)) \
+            + 4 * noisePower * sum(sum(EstSumAiAj))
 
         tau = np.sqrt(EstNoiseEnergy2/2)         # Rayleigh parameter
-        EstNoiseEnergy = tau*np.sqrt(np.pi/2)    # Expected value of noise energy
-        EstNoiseEnergySigma = np.sqrt((2 - np.pi/2)* tau**2)
-        T =  EstNoiseEnergy + k*EstNoiseEnergySigma  # Noise threshold
+        EstNoiseEnergy = tau * np.sqrt(np.pi/2)    # Expected value of noise energy
+        EstNoiseEnergySigma = np.sqrt((2 - np.pi/2) * tau**2)
+        T =  EstNoiseEnergy + k * EstNoiseEnergySigma  # Noise threshold
 
         # The estimated noise effect calculated above is only valid for the PC_1
         # measure.  The PC_2 measure does not lend itself readily to the same
@@ -285,7 +307,7 @@ def getphasesym(rows, cols, imfft, logGabor,
 
     # Normalize totalEnergy by the totalSumAmp to obtain phase symmetry
     # epsilon is used to avoid division by 000
-    phaseSym = totalEnergy/(totalSumAmp + epsilon)
+    phaseSym = totalEnergy / (totalSumAmp + epsilon)
 
     # Convert orientation matrix values to degrees
     orientation = orientation * (180/norient)
@@ -296,7 +318,13 @@ def getphasesym(rows, cols, imfft, logGabor,
 def phasesym(input_array, nscale, norient, minWaveLength, mult, sigmaOnf,
              dThetaOnSigma, k, polarity):
 
-    """python entry of phasesym"""
+    """ Modular interface for various operations in phasesym
+
+    Input: image as np array and other arguments for phasesym. Check
+    Readme for further details about arguments. If no arguments are
+    provided, the code uses default arguments. However, image as numpy array
+    must be provided
+    Output: phaseSym and orientation of image as numpy arrays"""
     
     rows, cols = input_array.shape
 
@@ -312,7 +340,7 @@ def phasesym(input_array, nscale, norient, minWaveLength, mult, sigmaOnf,
     #    responds to
     # 2) The angular component, which controls the orientation that the filter
     #    responds to.
-    # The two components are multiplied together to construct the overall filter.
+    # The two components are multiplied together to construct the overall filter
 
     # Construct filter radial components
     
@@ -334,7 +362,7 @@ def phasesym(input_array, nscale, norient, minWaveLength, mult, sigmaOnf,
                         minWaveLength,
                         mult,
                         sigmaOnf)
-    
+
     # Construct the angular filter components
     spread = getSpread(sintheta,
                        costheta,
@@ -357,7 +385,13 @@ def phasesym(input_array, nscale, norient, minWaveLength, mult, sigmaOnf,
 #-------------------------------------------------------------------------------
 def phasesym_fromArray(input_array, nscale, norient, minWaveLength, mult,
                        sigmaOnf, dThetaOnSigma, k, polarity):
-    """pass an array and get phasesym and orientation in the form of array back"""
+
+    """ Calculate phasesym from image as numpy array
+
+    Inputs: image as an np array, and other parameters for phasesym. See
+    README for more details
+    Outputs: numpy arrays phaseSym and orientation
+    """
     
     # Call to phasesym
     phaseSym, orientation = phasesym(input_array, 
@@ -369,8 +403,10 @@ def phasesym_fromArray(input_array, nscale, norient, minWaveLength, mult,
                                      dThetaOnSigma, 
                                      k, 
                                      polarity)
-                                     
-    
+
+    assert input_array.shape == phaseSym.shape
+    assert input_array.shape == orientation.shape
+
     return phaseSym, orientation
 
 #-------------------------------------------------------------------------------
@@ -390,7 +426,12 @@ def phasesym_fromfilename(
     ):
     
     """Basic input output file handling function.
-    This function also invokes call to phasesym_fromArray function"""
+    
+    Input: input and output filenames and phasesym arguments
+    This function also invokes call to phasesym_fromArray function
+    This function also saves the output from phasesym calculation
+    in user-specified format and path. For more details on output format
+    check README"""
 
     # Read input Image
     img = Image.open(input_filename)
@@ -422,9 +463,12 @@ def phasesym_fromfilename(
     cPickle.dump(data, open(output_filename, "w+"), protocol=2)
 
     
-#--------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def main():
-    """ optparsing and function call to matlab--python comparison module """
+
+    """ Main() function
+
+    optparsing and function call to matlab --> python comparison module """
 
     usage = "usage: %prog [options] <input_filename> <output_filename>"
 
@@ -495,17 +539,18 @@ def main():
         phasesym_fromfilename(input_filename,
                               output_filename,
                               # -- 
-                              nscale = opts.nscale,
-                              norient = opts.norient,
-                              minWaveLength = opts.minWaveLength,
-                              mult = opts.mult,
-                              sigmaOnf = opts.sigmaOnf,
-                              dThetaOnSigma = opts.dThetaOnSigma,
-                              k = opts.nstdeviations,
-                              polarity = opts.polarity,
-                              overwrite = opts.overwrite
+                              nscale=opts.nscale,
+                              norient=opts.norient,
+                              minWaveLength=opts.minWaveLength,
+                              mult=opts.mult,
+                              sigmaOnf=opts.sigmaOnf,
+                              dThetaOnSigma=opts.dThetaOnSigma,
+                              k=opts.nstdeviations,
+                              polarity=opts.polarity,
+                              overwrite=opts.overwrite
                               )
 
 
+#-------------------------------------------------------------------------------
 if __name__ == "__main__":
     main()
