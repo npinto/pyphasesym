@@ -38,6 +38,8 @@ def filter_intialization(rows, cols):
     # Set up X and Y matrices with ranges normalised to +/- 0.5
     # The following code adjusts things appropriately for odd and even values
     # of rows and columns.
+    assert rows > 1
+    assert cols > 1
 
     if np.mod(cols, 2):
         xr_arr = np.arange(-(cols - 1)/2, (cols - 1)/2 + 1, 
@@ -75,7 +77,12 @@ def filter_intialization(rows, cols):
     sintheta = np.sin(theta)
     costheta = np.cos(theta)
 
-    assert sintheta.shape == costheta.shape
+    imshape = rows,cols
+
+    assert sintheta.shape == imshape
+    assert costheta.shape == imshape
+    assert radius.shape == imshape
+    
     return sintheta, costheta, radius
 
 #-------------------------------------------------------------------------------
@@ -86,11 +93,10 @@ def get_low_pass_filter(rows, cols, cutoff, n_order):
     Input: imagesize, cuttoff frequency, order of filter
     Output: lowpass filter with given parameters. Implemented as np array"""
 
-    if cutoff < 0 or cutoff > 0.5:
-        print "ERROR:cutoff frequency must be between 0 and 0.5"
-
-    if n_order < 1.:
-        print "ERROR: n must be an integer >= 1"
+    assert 0 < cutoff <= 0.5
+    assert n_order > 1
+    assert rows > 1
+    assert cols > 1
 
     if np.mod(cols, 2):
         xr_arr = np.arange(-(cols - 1)/2, (cols - 1)/2 + 1, dtype="float32")/ \
@@ -119,7 +125,7 @@ def get_gabor(radius, lp_filter, nscale, min_wave_length, mult, sigma_on_f):
 
     for s_count in range(int(nscale)):
         wavelength =  min_wave_length * (mult ** s_count)
-        fo_comp = 1./wavelength                   # Filter Frequence
+        fo_comp = 1./wavelength             # Filter Frequence
 
         # Apply low pass filter
         log_gabor += [(np.exp((-(np.log(radius/fo_comp)) ** 2)/\
@@ -129,6 +135,7 @@ def get_gabor(radius, lp_filter, nscale, min_wave_length, mult, sigma_on_f):
         # back to zero (undo the radius fudge)
         log_gabor[s_count][0][0] = 0
 
+    assert len(log_gabor) == nscale
     return log_gabor
 
 #-------------------------------------------------------------------------------
@@ -140,11 +147,14 @@ def get_spread(sintheta, costheta, norient, d_theta_sigma):
     
     # Calculate the standard deviation of the angular Gaussian function
     # used to construct filters in the frequency plane.     
+    assert norient >= 1
+    assert d_theta_sigma > 0
+
     theta_sigma = np.pi/norient/d_theta_sigma
 
     # For each orientation
     for o_count in range(int(norient)):
-        angl = (o_count * np.pi)/ norient                      # Filter angle
+        angl = (o_count * np.pi)/ norient   # Filter angle
 
         # For each point in the filter matrix calculate angular distance from
         # the specified filter orientation.  To overcome the angular wrap-around
@@ -160,6 +170,7 @@ def get_spread(sintheta, costheta, norient, d_theta_sigma):
         # Angular filter component
         spread += [np.exp((-dtheta ** 2)/(2 * theta_sigma ** 2))]      
 
+    assert len(spread) == norient
     return spread
 
 #-------------------------------------------------------------------------------
@@ -212,8 +223,10 @@ def get_phasesym(rows, cols, imfft, log_gabor,
     total_energy = np.zeros((rows, cols), dtype="float32")
     orientation = np.zeros((rows, cols), dtype="float32")
     epsilon = 0.0001
-
+    imshape = rows, cols
     
+    assert norient > 0
+
     for o_count in range(int(norient)):  #for each orientation
 
         # Array initialization
@@ -231,7 +244,7 @@ def get_phasesym(rows, cols, imfft, log_gabor,
             # Convolve image with even and odd filters returning the result in 
             # eo_conv
             eo_conv[s_count][o_count] = np.fft.ifft2(imfft * filter_comp)
-            amp = abs(eo_conv[s_count][o_count]) #Amplitude response
+            amp = abs(eo_conv[s_count][o_count]) # Amplitude response
             s_amp_this_orient = s_amp_this_orient + amp
             
             # Record mean squared filter value at smallest
@@ -244,6 +257,8 @@ def get_phasesym(rows, cols, imfft, log_gabor,
                                                     eo_conv, o_count, 
                                                     polarity, nscale)
 
+
+        assert orientation_energy.shape == imshape
         # Noise Compensation
         # We estimate the noise power from the energy squared response at the
         # smallest scale.  If the noise is Gaussian the energy squared will
@@ -312,9 +327,11 @@ def get_phasesym(rows, cols, imfft, log_gabor,
     # Normalize total_energy by the total_sum_amp to obtain phase symmetry
     # epsilon is used to avoid division by 000
     phasesym_arr = total_energy / (total_sum_amp + epsilon)
+    assert phasesym_arr.shape == imshape
 
     # Convert orientation matrix values to degrees
     orientation = orientation * (180/norient)
+    assert orientation.shape == imshape
 
     return phasesym_arr, orientation
 
@@ -434,12 +451,12 @@ def phasesym_from_filename(
     This function also invokes call to phasesym_fromArray function
     This function also saves the output from phasesym calculation
     in user-specified format and path. For more details on output format
-    check README"""
+    check README"""    
 
     # Read input Image
     img = Image.open(input_filename)
     img = ImageOps.grayscale(img)
-    imarr = np.asarray(img)
+    imarr = np.asarray(img)    
 
     # Call to phasesym
     phasesym_arr, orientation = phasesym_from_array(imarr, 
