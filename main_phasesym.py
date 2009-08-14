@@ -27,6 +27,10 @@ DEFAULT_DTHETASEGMA = 1.2
 DEFAULT_NSTD = 2.
 DEFAULT_POLARITY = 0
 
+class phasesym_error(Exception): pass
+class out_of_range_error(phasesym_error): pass
+class array_dimension_mismatch_error(phasesym_error): pass
+
 #-------------------------------------------------------------------------------
 def filter_intialization(rows, cols):
 
@@ -38,8 +42,12 @@ def filter_intialization(rows, cols):
     # Set up X and Y matrices with ranges normalised to +/- 0.5
     # The following code adjusts things appropriately for odd and even values
     # of rows and columns.
-    assert rows > 1
-    assert cols > 1
+#    assert rows > 1
+#    assert cols > 1
+    if not rows > 1:
+        raise out_of_range_error, "cannot have image with rows < 1"
+    if not cols > 1:
+        raise out_of_range_error, "cannot have image with cols < 1"
 
     if np.mod(cols, 2):
         xr_arr = np.arange(-(cols - 1)/2, (cols - 1)/2 + 1, 
@@ -228,6 +236,7 @@ def get_phasesym(rows, cols, imfft, log_gabor,
     assert norient > 0
 
     for o_count in range(int(norient)):  #for each orientation
+        # later we combine phaswe congruency results over all orientations
 
         # Array initialization
         s_amp_this_orient = np.zeros((rows, cols), dtype="float32")
@@ -243,12 +252,16 @@ def get_phasesym(rows, cols, imfft, log_gabor,
             
             # Convolve image with even and odd filters returning the result in 
             # eo_conv
+            # convolving image with quadrature pair of filters
+            # quadrature filter is the one where real part of the filter is 
+            # related to its imaginary part via Hilbert transform along a 
+            # particular axis through origin (eg. Gabor filters)
             eo_conv[s_count][o_count] = np.fft.ifft2(imfft * filter_comp)
             amp = abs(eo_conv[s_count][o_count]) # Amplitude response
             s_amp_this_orient = s_amp_this_orient + amp
             
             # Record mean squared filter value at smallest
-            # scale. This si used for noise estimation
+            # scale. This is used for noise estimation
             if s_count == 0:
                 em_n = sum(sum(filter_comp ** 2)) 
        
@@ -332,7 +345,7 @@ def get_phasesym(rows, cols, imfft, log_gabor,
     # Convert orientation matrix values to degrees
     orientation = orientation * (180/norient)
     assert orientation.shape == imshape
-
+        
     return phasesym_arr, orientation
 
 #-------------------------------------------------------------------------------
@@ -378,28 +391,28 @@ def phasesym(input_array, nscale, norient, min_wave_length, mult, sigma_on_f,
 
     # Radial Component
     log_gabor = get_gabor(radius, 
-                        lp_filter,
-                        nscale,
-                        min_wave_length,
-                        mult,
-                        sigma_on_f)
+                          lp_filter,
+                          nscale,
+                          min_wave_length,
+                          mult,
+                          sigma_on_f)
 
     # Construct the angular filter components
     spread = get_spread(sintheta,
-                       costheta,
-                       norient,
-                       d_theta_sigma)
+                        costheta,
+                        norient,
+                        d_theta_sigma)
 
     # Get phase symmetry and orientation of image
     phasesym_arr, orientation = get_phasesym(rows, 
-                           cols, 
-                           imfft,
-                           log_gabor,
-                           spread,
-                           nscale,
-                           norient,
-                           k,
-                           polarity)
+                                             cols, 
+                                             imfft,
+                                             log_gabor,
+                                             spread,
+                                             nscale,
+                                             norient,
+                                             k,
+                                             polarity)
 
     return phasesym_arr, orientation
 
