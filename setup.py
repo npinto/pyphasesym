@@ -8,5 +8,5 @@ setup(name='Distutils',
       author='Abhijit Bendale',
       author_email='bendale@mit.edu',
       url='http://www.python.org/sigs/distutils-sig/',
-      packages=['main_phasesym','test_reg'],
+      packages=['main_phasesym','test_reg', 'phasesymtests'],
      )

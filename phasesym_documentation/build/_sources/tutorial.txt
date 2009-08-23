@@ -1,0 +1,30 @@
+Tutorial
+============
+
+Example 1
+-----------
+
+The code has a set of default values of usage. Hence, the code can be used on a 
+terminal as 
+
+python main_phasesym.py <input image path> <output>
+
+<input image path> : path to input image. All the image formats that can be read
+by PIL can be used.
+<output> : this is the name of the file in which phasesym and orientation at 
+each point in the image will be stored as numpy arrays in cPickle format
+
+Example 2
+-----------
+
+In order to use user defined parameters for computing phasesym for a given 
+image, use the program in following way:
+
+python main_phasesym.py <input image path> <output> -s <nscale> -o <norient>
+-w <min_wave_length> -m <mult> -g <sigma_on_f> -d <d_thetaa_sigma> 
+-k <nstdeviations> -p <polarity>
+
+Any number of above mentioned parameters can be specified. The program contains
+set of defaults for each flag. Hence, a potential usage coule be
+
+python main_phasesym.py cameraman.tif out -s 7 -o 4 -p 1

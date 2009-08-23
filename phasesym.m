@@ -24,7 +24,7 @@
 %    minWaveLength    3    - Wavelength of smallest scale filter.
 %    mult             2.1  - Scaling factor between successive filters.
 %    sigmaOnf         0.55 - Ratio of the standard deviation of the Gaussian 
-%                            describing the log Gabor filter's transfer function 
+%                            describing the log Gabor filters transfer function 
 %                            in the frequency domain to the filter center frequency.
 %    dThetaOnSigma    1.2  - Ratio of angular interval between filter orientations
 %                            and the standard deviation of the angular Gaussian
@@ -78,7 +78,7 @@
 % See Also:  PHASECONG, PHASECONG2, GABORCONVOLVE, PLOTGABORFILTERS
 
 % References:
-%     Peter Kovesi, "Symmetry and Asymmetry From Local Phase" AI'97, Tenth
+%     Peter Kovesi, "Symmetry and Asymmetry From Local Phase" AI97, Tenth
 %     Australian Joint Conference on Artificial Intelligence. 2 - 4 December
 %     1997. http://www.cs.uwa.edu.au/pub/robvis/papers/pk/ai97.ps.gz.
 %

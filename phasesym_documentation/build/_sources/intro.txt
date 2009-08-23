@@ -1,0 +1,24 @@
+Introduction
+============
+
+This is the documentation for pyphasesym: python implementation of phasesym.
+pyphasesym is based on Peter Kovesi's original phasesym algorithm, paper and
+code. The original code and papers can be obtained from Peter Kovesi's 
+website. For more details reader is referred to Dr.Kovesi's 
+`webpage <http://www.csse.uwa.edu.au/~pk/Research/MatlabFns/>`_
+
+In this package we provide a modularized version of Pete's original matlab code.
+Preliminary  unittesting is introduced in this code. This code follows PEP8 and 
+pylint specifications. 
+
+Prerequisites
+-------------
+
+Following python modules are necessary for the use of the code:
+
+* numpy
+* scipy
+* optparse
+* unittest
+* Image
+* ImageOps
